@@ -1,0 +1,52 @@
+# Contenedores del C4 nivel 2: API (monolito modular, 2 réplicas), PostgreSQL, Redis y RabbitMQ.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: rapipedido
+      POSTGRES_USER: rapipedido
+      POSTGRES_PASSWORD: rapipedido
+    ports: ["${PG_PORT:-5433}:5432"]   # 5433 en el host para no chocar con un Postgres local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rapipedido"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["${REDIS_PORT:-6380}:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "${RABBIT_PORT:-5673}:5672"
+      - "15672:15672"   # consola: http://localhost:15672 (guest/guest)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+
+  app:
+    build: .
+    image: rapipedido:latest
+    deploy:
+      replicas: 2       # "en hora pico se replica el monolito"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/rapipedido
+      REDIS_HOST: redis
+      RABBIT_HOST: rabbitmq
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
+  # Front React + balanceador: sirve la web y reparte /api y /ws (WebSocket) entre las réplicas
+  web:
+    build: ./frontend
+    image: rapipedido-web:latest
+    ports: ["8080:80"]
+    depends_on: [app]

@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: rapipedido
+  mvc:
+    problemdetails:
+      enabled: true   # errores en formato RFC 7807 con el mensaje en "detail" (lo muestra el front)
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/rapipedido}
+    username: ${DB_USER:rapipedido}
+    password: ${DB_PASSWORD:rapipedido}
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
+    redis:
+      time-to-live: 10m
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: 5672
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASSWORD:guest}
+    # El relay del outbox espera la confirmación del broker antes de marcar un evento como publicado.
+    publisher-confirm-type: simple
+    listener:
+      simple:
+        concurrency: 4
+        max-concurrency: 16
+        prefetch: 10
+        # Tras agotar los reintentos el mensaje NO se reencola: va a la cola de mensajes muertos (DLQ).
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 5        # intentos a los 0 s, 1 s, 3 s, 7 s y 15 s
+          initial-interval: 1s
+          multiplier: 2
+          max-interval: 10s
+
+rapipedido:
+  costo-envio: 5000
+  comision:
+    porcentaje: 0.15
+  outbox:
+    intervalo-ms: 200
+  pagos:
+    reconciliacion-ms: 15000
+    reintento-tras-segundos: 30
+    max-intentos: 10
+  pasarela:
+    # Valores iniciales de la pasarela simulada; se cambian en caliente con PUT /api/admin/pasarela
+    timeout-ms: 3000
+    latencia-ms: 300
+    tasa-fallo: 0.0
+    tasa-rechazo: 0.0
+  asignacion:
+    radio-km: 5
+    reintento-ms: 10000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.rapipedido: INFO
