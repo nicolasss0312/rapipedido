@@ -7,6 +7,7 @@ Redis como caché y almacén de ubicaciones.
 **Documentación**
 - [Diseño de arquitectura](docs/RapiPedido%20-%20Dise%C3%B1o%20de%20arquitectura.pdf): actores, atributos de calidad, C4 y ADR-001.
 - [Cómo funciona el código](docs/RapiPedido%20-%20C%C3%B3mo%20funciona%20el%20c%C3%B3digo.pdf): recorrido de un pedido por el código, con capturas.
+- [Presentación: cómo funciona el código](docs/RapiPedido%20-%20Presentaci%C3%B3n%20c%C3%B3mo%20funciona%20el%20c%C3%B3digo.pdf): versión en diapositivas (16) para la exposición.
 
 ## Cómo correrlo
 
